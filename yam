@@ -1,0 +1,168 @@
+CyberML? Nah
+------------
+Jam? Yam? .ym is good
+---------------------
+
+# comment
+
+foo bar       # application
+
+identifier
+ident1f1er
+identifier'
+identifier''
+_identifier
+id-en-ti-fi-er   # ?
+$identifier
+<identifier>     # ?
+
+do expr1; exprs end   # blocks
+(expr1; exprs)
+
+if expr1
+then expr1
+else expr1
+
+"string"
+"#{interpolated}"
+
+let a1 = v1 in expr
+let | a1 = v1
+    | a2 = v2
+in expr
+# ~> (function(a1,a2){expr})(v1,v2)
+
+
+# named let is recursive
+let name arg1 = expr  # fun?
+
+let name | arg1 = expr
+         | arg1 = expr
+
+# let a1 = v1 and a2 = v2 in expr  ?
+
+fn -> expr
+fn arg1 arg2 -> expr
+fn | a1 -> expr
+   | a2 -> expr
+
+# ? or: match, when
+case v | p1 -> expr
+       | p2 -> expr
+       | Cons(a,b,c) -> expr
+       | d=Cons(a,b,c) -> expr
+       | p2 if expr -> expr
+       | else -> expr
+
+
+expr1 rescue v1
+expr1 rescue ex1 -> v1
+expr1 rescue | ex1 -> v1
+             | ex2 -> v2
+
+raise ex1
+raise Ex1(v1, v2)
+
+
+Cons val   # tagging constructor [= js wrapping object]
+(1, 2, 3) = {1: 1, 2: 2, 3: 3}  # tuple [= js array]
+{a: v1, b: v2}  # record [= js object]
+let Nil = ()
+a : (b,c,d) = (a,b,c,d)
+
+record.field
+
+
+# userdefined operators
+infix (+) 6
+infixr (+) 6
+infixl (+) 6
+
+let (+) a b = a `plus` b
+
+a `function` b
+
+
+let fib | 0 = 0
+        | 1 = 1
+        | n = fib (n-1) (n-2)
+
+let map | f () = ()
+        | f (a:b) = f a : map b
+
+let foldr | f n () = n
+          | f n (a:b) = f (a, foldr f n b)
+
+let foldl | f n () = n
+          | f n (a:b) = foldl f (f (n, a)) b
+
+let map f = foldl (fn (a,e) -> f a : e) ()
+
+let eval | env Add(a, b) = (eval env a) + (eval env b)
+         | env Var(a)    = lookup env a
+
+let eval' env term =
+  case term | Add(a, b) = (eval env a) + (eval env b)
+            | Var(a)    = lookup env a
+
+
+while x < y do                  # while loop, harmful?
+  x := x * y                    # reassignment, harmful?
+end
+
+
+module N do
+  # all bindings are wrapped up into a record
+end
+
+module do
+  # all bindings are wrapped up into an anonymous record
+end
+
+# Functors?
+
+functor f a b c... do
+  ... a b c ...
+end
+<=>
+let f a b c = module do ... a b c ... end
+
+
+# ToDo: Add generics!
+
+
+# Some ML code rewritten in yam:
+
+val tables = List.mapPartial (fn (DTable (s, xts), _) => SOME (s, xts)
+                               | _ => NONE) ds
+
+let tables = List.mapPartial (fn | (DTable(s, xts), _) -> Some(s, xts)
+                                 | else                -> None) ds
+
+
+let
+    val unusable = SS.foldl (fn (x', unusable) =>
+                                case SM.find (fnums, x') of
+                                    NONE => unusable
+                                  | SOME n => IS.add (unusable, n))
+                   IS.empty xs
+
+    fun findAvailable n =
+        if IS.member (unusable, n) then
+            findAvailable (n + 1)
+        else
+            n
+in
+    SM.insert (fnums, x, findAvailable 0)
+end
+
+
+let | unusable = SS.foldl(fn (x', unusuable) ->
+                            case SM.find(fnums, x')
+                            | None => unusable
+                            | Some n => IS.add(unusable, n))
+                        IS.empty xs
+    | findAvailable n = if IS.member(unusable, n)
+                        then findAvailable(n+1)
+                        else n
+in SM.insert(fnums, x, findAvailable 0)
