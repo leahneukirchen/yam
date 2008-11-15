@@ -183,11 +183,19 @@ function infixl_op(name) {
 
 function infixr_op(name) {
   return action(whitespace(name),
-                function(ast) { return function(lhs, rhs) {
-                  return { type: "app",
-                           expr: { type: "app", expr: {type:"var",name:name}, arg: rhs },
-                           arg: lhs }
-                }})
+    // XXX ugly, but works
+    function(ast) { return function(lhs, rhs) {
+      var head = lhs
+      while (head.type == "app" && head.arg.type == "app") {
+        head = head.arg
+      }
+      if (head.type == "app") {
+        head.arg = { type: "app", expr: { type: "app", expr: { type: "var", name: name }, arg: head.arg }, arg: rhs }
+        return lhs
+      } else {
+        return { type: "app", expr: { type: "app", expr: { type: "var", name: name }, arg: lhs }, arg: rhs }
+      }
+    } } )
 }
 
 infix_op = infixl_op
