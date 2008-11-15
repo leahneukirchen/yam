@@ -1,0 +1,3 @@
+#!/bin/sh
+js test-parser.js
+js test-compiler.js
