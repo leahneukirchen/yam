@@ -335,7 +335,7 @@ var OpDecl = action(choice(action(wsequence("infixl", Operator, DecimalLiteral),
                                   }),
                            action(wsequence("infix", Operator, DecimalLiteral),
                                   function(ast) {
-                                    defineOp(ast[1], 'left', ast[2])
+                                    defineOp(ast[1], 'none', ast[2])
                                     updateOpParser()
                                   })),
                     function(ast) { return { type: "noop" } })
@@ -438,3 +438,10 @@ print(sexpr(CompilationUnit(ps(  "infixl * 7 "
                                + "infixl + 6 "
                                + "infixl - 6 "
                                + "a + b * c")).ast[4]))
+
+print(sexpr(CompilationUnit(ps(  "infixr <=> 7 "
+                               + "a <=> b <=> c")).ast[1]))
+print(sexpr(CompilationUnit(ps(  "infixl <=> 7 "
+                               + "a <=> b <=> c")).ast[1]))
+print(sexpr(CompilationUnit(ps(  "infix <=> 9 "
+                               + "a <=> b <=> c")).ast[1]))
