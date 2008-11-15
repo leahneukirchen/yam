@@ -222,6 +222,17 @@ function compile_expr(e) {
     }
     emit("]")
     break
+  case "record":
+    emit("{")
+    for (var i = 0; i < e.elts.length; i++) {
+      emit(mangle(e.elts[i][0]))
+      emit(": ")
+      compile_expr(e.elts[i][1])
+      if (i < e.elts.length-1)
+        emit(",")
+    }
+    emit("}")
+    break
   case "cons":
     emit("(new Cons('")
     emit(e.name)

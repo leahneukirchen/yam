@@ -65,3 +65,6 @@ ok(compiles( "infixl * 7 "
 ok(compiles("a.1.A"))
 
 ok(compiles("{% print(foo) %} "))
+
+ok(compiles("{a: 1, b: 2+2}"))
+ok(compiles("{A: 1, 4: 2+2}"))
