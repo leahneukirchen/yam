@@ -47,13 +47,14 @@ function emit_matchers(expr, prefix) {
   case "var":
     break               // nothing to do
   case "lit":
-    emit("&& " + prefix + " === " + serialize(expr) + " ")
+    emit("&& " + prefix + " === " + serialize(expr.expr) + " ")
     break
   case "cons":
     emit("&& " + prefix + " instanceof Cons && " + prefix + ".name === " + serialize(expr.name) + " ")
     emit_matchers(expr.expr, prefix + ".value" + " ")
     break
   case "tuple":
+    emit("&& " + prefix + " instanceof Array ")
     for (var i = 0; i < expr.elts.length; i++)
       emit_matchers(expr.elts[i], prefix + "[" + i + "]")
     break
@@ -157,7 +158,7 @@ function compile_expr(e) {
       }
       compile_expr(fn.expr)
       for (var i = 0; i < fn.args.length; i++)
-        emit(")")
+        emit("}")
     } else {
       print(e.fns[0].toSource())
       var a = e.fns[0]
@@ -224,6 +225,9 @@ function compile_expr(e) {
     emit(serialize(e.field))
     emit("]")
     break
+  case "raw":
+    emit("(" + e.code + ")")
+    break
   default:
     throw "undefined type in compile_expr: " + e.toSource()
   }
@@ -275,3 +279,5 @@ print(compile( "infixl * 7 "
              + "infixl - 6 "
              + "a + b * c"))
 print(compile("a.1.A"))
+
+print(compile("{% print(foo) %} "))

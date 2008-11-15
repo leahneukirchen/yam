@@ -30,7 +30,6 @@ function identifier(id, id2) {
 
 function literal(lit, ex) {
   var a = Literal(ps(lit)).ast
-  p(a)
   return a && a.type == "lit" && a.expr === ex
 }
 
@@ -104,3 +103,5 @@ ok(literal('"fo\\no"', "fo\no"))
 /* Unsupported JavaScript syntaxes.  */
 ok(!literal(".2", .2))
 ok(!literal("'foo'", "foo"))
+
+p_ast("fn (x,y) -> x")

@@ -103,6 +103,12 @@ var StringLiteral = action(joined(sequence("\"", joined(repeat0(DoubleStringChar
 var Literal = action(choice(NumericLiteral, StringLiteral),
   function(ast) { return { type: "lit", expr: ast } })
 
+var Tuple = action(wsequence("(", lossyList(Expr, ","), ")"),
+  function(ast) { if (ast[1].length == 1)
+                    return ast[1][0] // no 1-tuples
+                  else
+                    return { type: "tuple", elts: ast[1] } })
+
 var MatchParen = action(wsequence(expect("("), MatchTerm, expect(")")),
   function(ast) { return ast[0] })
 var BoundMatch = action(wsequence(Identifier, "@", MatchTerm),
@@ -111,6 +117,7 @@ var MatchTerm = whitespace(choice(BoundMatch,
                                   Var,
                                   Constructor,
                                   Literal,
+                                  Tuple,
                                   MatchParen))
 var MatchTerms = choice(action(wsequence(repeat0(MatchTerm), "if", Expr),
                                function(ast) { return [{ type: "guard", guard: ast[2], term: ast[0] }] }),
@@ -126,12 +133,6 @@ var single_bind = choice(action(wsequence(Identifier, "=", Expr),
 
 var multi_bind = repeat1(action(wsequence("|", single_bind),
   function(ast) { return ast[1][0] }))
-
-var Tuple = action(wsequence("(", lossyList(Expr, ","), ")"),
-  function(ast) { if (ast[1].length == 1)
-                    return ast[1][0] // no 1-tuples
-                  else
-                    return { type: "tuple", elts: ast[1] } })
 
 var RecordKey = choice(Identifier, ConstructorName,
                        DecimalIntegerLiteral)
@@ -160,7 +161,13 @@ var DefLet = action(wsequence(token("let"), choice(single_bind, multi_bind)),
 var Paren = action(sequence(expect("("), Expr, expect(")")),
   function(ast) { return ast[0] })
 
-var ExprNoApp = choice(Literal, Constructor, Tuple, Record, Fn, Let, Var, Paren)
+var Raw = action(sequence("{%",
+                          joined(repeat1(choice(negate('%'),
+                                                joined(sequence('%', not('}')))))),
+                          "%}"),
+  function(ast) { return { type: "raw", code: ast[1] } })
+
+var ExprNoApp = choice(Literal, Constructor, Tuple, Record, Fn, Let, Var, Paren, Raw)
 
 var App = action(wsequence(ExprNoApp, ExprNoOp),
   function(ast) { return { type: "app", expr: ast[0], arg: ast[1] } })
@@ -445,3 +452,5 @@ print(Expr(ps("{a: b, A: b, 0: b}")).toSource())
 
 print(CompilationUnit(ps(    "infixl ++ 3 "
                            + "c ++ d + e")).toSource())
+
+print(Expr(ps("{% foo %}")).toSource())
