@@ -1,0 +1,5 @@
+require "knock"
+
+let _ = ok (8 == 8)
+let _ = ok (8 != 9)
+let _ = ok (8 < 9)
