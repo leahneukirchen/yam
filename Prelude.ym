@@ -1,0 +1,45 @@
+infixr ** 8
+
+let (**) a b = {% Math.pow(a, b) %}
+
+infixl * 7
+infixl / 7
+
+let (*) a b = {% a * b %}
+let (/) a b = {% a / b %}
+
+infixl + 6
+infixl - 6
+
+let (+) a b = {% a + b %}
+let (-) a b = {% a - b %}
+
+infix == 4
+infix != 4
+infix < 4
+infix <= 4
+infix > 4
+infix >= 4
+
+let (==) a b = {% a == b %}
+let (!=) a b = {% a != b %}
+let (<) a b  = {% a < b  %}
+let (<=) a b = {% a <= b %}
+let (>) a b  = {% a > b  %}
+let (>=) a b = {% a >= b %}
+
+infixr && 3
+
+let (&&) a b = {% a && b %}
+
+infixr && 2
+
+let (||) a b = {% a || b %}
+
+infixr $ 0
+
+let ($) a b = {% a(b) %}
+
+
+
+let print = {% print %}
