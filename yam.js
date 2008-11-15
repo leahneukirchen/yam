@@ -22,12 +22,12 @@ var TopLevelExpr = function(state) { return TopLevelExpr(state); }
 var ReservedWord = choice("end", "fn", "if", "in",
                           "infix", "infixl", "infixr",
                           "let", "module")
-var ReservedOperator = choice("|", "@", "->")
+var ReservedOperator = choice("|", "@", "->", "=")
 
 var IdentifierBeginning = choice(range("a", "z"), "_", "$")
 var IdentifierPart = choice(range("a", "z"), range("A", "Z"),
-                            range("0", "9"), "_", "-", "$")
-var IdentifierEnd = choice(IdentifierPart, "'", "!", "?")
+                            range("0", "9"), "_", "-", "$", "'")
+var IdentifierEnd = choice(IdentifierPart, "!", "?")
 
 var IdentifierName = joined(
   sequence(IdentifierBeginning,
@@ -98,7 +98,7 @@ var DoubleStringCharacter = choice(negate(choice("\"", "\\", "\r", "\n")),
 var StringLiteral = action(joined(sequence("\"", joined(repeat0(DoubleStringCharacter)), "\"")),
   function(ast) { return eval(ast) })   // XXX ick
 
-/* end of adapted code */
+/* end of adapted code.  */
 
 var Literal = action(choice(NumericLiteral, StringLiteral),
   function(ast) { return { type: "lit", expr: ast } })
