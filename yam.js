@@ -52,7 +52,13 @@ var Operator = butnot(join_action(repeat1(
          "<", "=", ">", "?", "@", "\\", "^", "|", "~")),
   ""), ReservedOperator)
 var OperatorName = action(sequence(expect("("), Operator, expect(")")),
-  function(ast) { return ast[0] })
+  function(ast) {
+    if (!opDefined(ast[0])) {
+      defineOp(ast[0], "left", 9)
+      updateOpParser()
+    }
+    return ast[0]
+  })
 
 var Identifier = choice(butnot(IdentifierName, ReservedWord),
                         OperatorName)
@@ -216,6 +222,13 @@ function nonfix(p, s) {
 }
 
 var ops = []
+
+function opDefined(op) {
+  for (var i = 0; i < ops.length; i++)
+    if (ops[i].name == op)
+      return true
+  return false
+}
 
 function defineOp(op, assoc, precedence) {
   for (var i = 0; i < ops.length; i++)
