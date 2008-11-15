@@ -27,11 +27,13 @@ function lossyList(p, s) {
     function(ast) { return ast[0] ? ast[0] : [] })
 }
 
+/* forward declarations.  */
 var Expr = function(state) { return Expr(state); }
 var ExprNoOp = function(state) { return ExprNoOp(state); }
 var MatchTerm = function(state) { return MatchTerm(state); }
+var TopLevelExpr = function(state) { return TopLevelExpr(state); }
 
-var ReservedWord = choice("fn", "if", "in", "let")
+var ReservedWord = choice("end", "fn", "if", "in", "let", "module")
 var ReservedOperator = choice("|", "@", "->")
 
 var IdentifierBeginning = choice(range("a", "z"), "_", "$")
@@ -220,7 +222,20 @@ var Infix0 = chainl(whitespace(Infix3), choice(infixr_op('$')))
 
 var Infix = Infix0
 
-var Expr = choice(App, Infix, ExprNoOp, DefLet)
+var Module = action(wsequence("module", repeat0(TopLevelExpr), "end"),
+  function(ast) { return { type: "module", exprs: ast[1] } })
+
+var NamedModule = action(wsequence("module", Identifier,
+                                   repeat0(TopLevelExpr), "end"),
+  function(ast) { return { type: "def", bindings:
+                           [[ast[1], { type: "module", exprs: ast[2] }]]
+                         }})
+
+var Expr = choice(App, Infix, ExprNoOp, Module)
+
+var TopLevelExpr = choice(NamedModule, Expr, DefLet)
+
+var CompilationUnit = repeat0(TopLevelExpr)
 
 print(Expr(ps("let a = b in c")).toSource())
 print(Expr(ps("let | a = b | c = d in c")).toSource())
@@ -298,4 +313,8 @@ print(Expr(ps("let a = b in c")).toSource())
 print(Expr(ps("let a x = b")).toSource())
 
 print(Expr(ps("(fn x y -> y) 6 7")).toSource())
+
+print(CompilationUnit(ps("let a = b let c = d")).toSource())
+
+print(CompilationUnit(ps("module z let a = b end")).toSource())
 

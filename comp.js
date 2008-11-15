@@ -25,11 +25,12 @@ function assert(t, str) {
 }
 
 function compile(str) {
-  var expr = Expr(ps(str)).ast
+  var expr = CompilationUnit(ps(str)).ast
   print(expr.toSource())
 
   $code = []
-  compile_expr(expr)
+  for (var i = 0; i < expr.length; i++)
+    compile_expr(expr[i])
   return $code.join("")
 }
 
@@ -119,6 +120,28 @@ function compile_expr(e) {
         emit(",")
     }
     emit(")")
+    break
+  case "def":
+    for (var i = 0; i < e.bindings.length; i++) {
+      emit("var " + mangle(e.bindings[i][0]) + " = ")
+      compile_expr(e.bindings[i][1])
+      emit("; ")
+    }
+    break
+  case "module":
+    emit("function(){ ")
+    var exported = []
+    for (var i = 0; i < e.exprs.length; i++) {
+      compile_expr(e.exprs[i])
+      if (e.exprs[i].type == "def")
+        for (var j = 0; j < e.exprs[i].bindings.length; j++)
+          exported.push(e.exprs[i].bindings[j][0])
+    }
+
+    emit("return {")
+    for (var i = 0; i < exported.length; i++)
+      emit(mangle(exported[i]) + ": " + mangle(exported[i]) + ", ")
+    emit("} }()")
     break
   case "fn":
     //assert(e.fns.length == 1, "single fn only yet")
@@ -218,3 +241,7 @@ print(compile('fn | Pair(x,y) -> x | _ -> _'))
 print(compile('fn | Pair(Pair(x,z),y) -> x | _ -> _'))
 
 print(compile("fn | x y if x == y -> 1 | _ _ -> 0"))
+
+print(compile("module z let a = b end"))
+
+print(compile("module let a = b end"))
