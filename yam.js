@@ -174,7 +174,7 @@ var ExprNoApp = choice(Literal, Constructor, Tuple, Record, Fn, Let, Var, Paren)
 var App = action(wsequence(ExprNoApp, ExprNoOp),
   function(ast) { return { type: "app", expr: ast[0], arg: ast[1] } })
 
-var ExprNoOp = choice(Literal, Constructor, Tuple, Record, Fn, App, Let, Var, Paren)
+var ExprNoOp = choice(App, ExprNoApp)
 
 function infixl_op(name) {
   return action(whitespace(name),
@@ -220,7 +220,7 @@ var Infix0 = chainl(whitespace(Infix3), choice(infixr_op('$')))
 
 var Infix = Infix0
 
-var Expr = choice(Literal, Constructor, Tuple, Record, Fn, Let, DefLet, Infix, App, Var, Paren)
+var Expr = choice(App, Infix, ExprNoOp, DefLet)
 
 print(Expr(ps("let a = b in c")).toSource())
 print(Expr(ps("let | a = b | c = d in c")).toSource())
@@ -296,4 +296,6 @@ print(Expr(ps("fn | 0 -> 1 | 2 -> 3")).toSource())
 print(Expr(ps("let a = b in c")).toSource())
 
 print(Expr(ps("let a x = b")).toSource())
+
+print(Expr(ps("(fn x y -> y) 6 7")).toSource())
 
