@@ -334,7 +334,9 @@ var OpDecl = action(choice(action(wsequence("infixl", Operator, DecimalLiteral),
 
 var TopLevelExpr = choice(OpDecl, NamedModule, Expr, DefLet)
 
-var CompilationUnit = repeat0(TopLevelExpr)
+var CompilationUnit = repeat0(action(sequence(whitespace(TopLevelExpr),
+                                              optional(whitespace(""))),
+                                     function(ast){return ast[0]}))
 
 print(Expr(ps("let a = b in c")).toSource())
 print(Expr(ps("let | a = b | c = d in c")).toSource())

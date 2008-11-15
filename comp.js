@@ -25,8 +25,20 @@ function assert(t, str) {
 }
 
 function compile(str) {
-  var expr = CompilationUnit(ps(str)).ast
+  var cu = CompilationUnit(ps(str))
+  var expr = cu.ast
   print(expr.toSource())
+  
+  if (!cu)
+    throw("syntax error, can't parse")
+
+  if (cu.remaining.length > 0) {
+    print(cu.remaining.toSource())
+    throw("syntax error: " +
+          cu.remaining.input.substr(0, cu.remaining.index) + " **> " +
+          cu.remaining.input.substr(cu.remaining.index, cu.remaining.length) +
+          " <**")
+  }
 
   $code = []
   for (var i = 0; i < expr.length; i++)
