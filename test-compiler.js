@@ -68,3 +68,6 @@ ok(compiles("{% print(foo) %} "))
 
 ok(compiles("{a: 1, b: 2+2}"))
 ok(compiles("{A: 1, 4: 2+2}"))
+
+ok(compiles("module let a = 9 end"))
+ok(compiles("module z let a = 9 end"))

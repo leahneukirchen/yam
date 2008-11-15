@@ -144,7 +144,7 @@ function compile_expr(e) {
     }
     break
   case "module":
-    emit("function(){ ")
+    emit("(function(){ ")
     var exported = []
     for (var i = 0; i < e.exprs.length; i++) {
       compile_expr(e.exprs[i])
@@ -154,13 +154,16 @@ function compile_expr(e) {
     }
 
     emit("return {")
-    for (var i = 0; i < exported.length; i++)
-      emit(mangle(exported[i]) + ": " + mangle(exported[i]) + ", ")
-    emit("} }()")
+    for (var i = 0; i < exported.length; i++) {
+      emit(mangle(exported[i]) + ": " + mangle(exported[i]))
+      if (i < exported.length-1)
+        emit(", ")
+    }
+    emit("} })()")
     break
   case "fn":
     //assert(e.fns.length == 1, "single fn only yet")
-    if (e.fns.length == 1) {
+    if (0 && e.fns.length == 1) {
       var fn = e.fns[0]
       for (var i = 0; i < fn.args.length; i++) {
         emit("function(")
