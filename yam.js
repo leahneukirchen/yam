@@ -37,7 +37,7 @@ var ExprNoOp = function(state) { return ExprNoOp(state); }
 var MatchTerm = function(state) { return MatchTerm(state); }
 var TopLevelExpr = function(state) { return TopLevelExpr(state); }
 
-var ReservedWord = choice("end", "fn", "if", "in", "let", "module")
+var ReservedWord = choice("end", "fn", "if", "in", "infix", "infixl", "infixr", "let", "module")
 var ReservedOperator = choice("|", "@", "->")
 
 var IdentifierBeginning = choice(range("a", "z"), "_", "$")
@@ -210,6 +210,85 @@ function nonfix(p, s) {
                 });
 }
 
+var ops = []
+
+function defineOp(op, assoc, precedence) {
+  for (var i = 0; i < ops.length; i++)
+    if (ops[i].name == op)
+      ops.splice(i, 1)          // delete entry
+  ops.push({name: op, assoc: assoc, prec: precedence})
+}
+
+function findChain(ops) {
+  var chain
+  for (var i = 0; i < ops.length; i++) {
+    if (ops[i].assoc == "none") {
+      if (chain == chainl)
+        throw("Mixed assoc levels in " + ops.toSource())
+      chain = nonfix
+    } else {
+      if (chain == nonfix)
+        throw("Mixed assoc levels in " + ops.toSource())
+      chain = chainl
+    }
+  }
+  return chain || chainl
+}
+
+function buildChoice(ops) {
+  var parsers = []
+  for (var i = 0; i < ops.length; i++) {
+    switch(ops[i].assoc) {
+    case "left":
+      parsers.push(infixl_op(ops[i].name))
+      break
+    case "right":
+      parsers.push(infixr_op(ops[i].name))
+      break
+    case "none":
+      parsers.push(infix_op(ops[i].name))
+      break
+    default:
+      throw("Unknown assoc level: " + ops[i].assoc)
+    }
+  }
+  return choice.apply(choice, parsers)
+}
+
+function buildOpParser(ops) {
+  ops = ops.sort(function(a, b) { return a.prec - b.prec })
+  var tbl = []
+  for (var i = 0; i < ops.length; i++) {
+    var prec = ops[i].prec
+    tbl[prec] = tbl[prec] || []
+    tbl[prec].push(ops[i])
+  }
+
+  var parsers = []
+
+  parsers[tbl.length] = ExprNoOp
+  for (var i = tbl.length - 1; i >= 0; i--) {
+    tbl[i] = tbl[i] || []
+    parsers[i] = findChain(tbl[i])(whitespace(parsers[i+1]), buildChoice(tbl[i]))
+  }
+  return parsers[0]
+}
+
+function updateOpParser() {
+  opParser = buildOpParser(ops)
+}
+
+defineOp('*', 'left', 7)
+defineOp('/', 'left', 7)
+defineOp('+', 'left', 6)
+defineOp('-', 'left', 6)
+defineOp('==', 'none', 4)
+defineOp('||', 'right', 3)
+defineOp('&&', 'right', 3)
+defineOp('$', 'right', 0)
+
+updateOpParser()
+
 // strongest
 // left-associative
 var Infix7 = chainl(whitespace(ExprNoOp), choice(infixl_op('*'), infixl_op('/')))
@@ -218,11 +297,13 @@ var Infix6 = chainl(whitespace(Infix7), choice(infixl_op('+'), infixl_op('-')))
 var Infix4 = nonfix(whitespace(Infix6), choice(infix_op('==')))
 // right-associative
 var Infix3 = chainl(whitespace(Infix4), choice(infixr_op('||'), infixr_op('&&')))
-var Infix0 = chainl(whitespace(Infix3), choice(infixr_op('$')))
+//var Infix0 = chainl(whitespace(Infix3), choice(infixr_op('$')))
 // weakest
 
 // TODO: build list of infix levels from table.
 //       avoid + trying to match ++
+
+var Infix0 = function(state) { return opParser(state) }
 
 var Infix = chainl(whitespace(Infix0), action(whitespace(';'),
   function(ast) { return function(lhs, rhs) {
@@ -242,7 +323,24 @@ var NamedModule = action(wsequence("module", Identifier,
 
 var Expr = choice(App, Infix, ExprNoOp, Module)
 
-var TopLevelExpr = choice(NamedModule, Expr, DefLet)
+var OpDecl = action(choice(action(wsequence("infixl", Operator, DecimalLiteral),
+                                  function(ast) {
+                                    defineOp(ast[1], 'left', ast[2])
+                                    updateOpParser()
+                                  }),
+                           action(wsequence("infixr", Operator, DecimalLiteral),
+                                  function(ast) {
+                                    defineOp(ast[1], 'right', ast[2])
+                                    updateOpParser()
+                                  }),
+                           action(wsequence("infix", Operator, DecimalLiteral),
+                                  function(ast) {
+                                    defineOp(ast[1], 'left', ast[2])
+                                    updateOpParser()
+                                  })),
+                    function(ast) { return { type: "noop" } })
+
+var TopLevelExpr = choice(OpDecl, NamedModule, Expr, DefLet)
 
 var CompilationUnit = repeat0(TopLevelExpr)
 
@@ -329,3 +427,14 @@ print(CompilationUnit(ps("module z let a = b end")).toSource())
 
 print(CompilationUnit(ps("a; b a; c")).toSource())
 
+print(sexpr(CompilationUnit(ps(  "infixl * 6 "
+                               + "infixl / 6 "
+                               + "infixl + 7 "
+                               + "infixl - 7 "
+                               + "a + b * c")).ast[4]))
+
+print(sexpr(CompilationUnit(ps(  "infixl * 7 "
+                               + "infixl / 7 "
+                               + "infixl + 6 "
+                               + "infixl - 6 "
+                               + "a + b * c")).ast[4]))

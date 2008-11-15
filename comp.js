@@ -95,6 +95,8 @@ function emit_assigners(expr, prefix) {
 
 function compile_expr(e) {
   switch (e.type) {
+  case "noop":
+    break
   case "app":
     emit("(")
     compile_expr(e.expr)
@@ -254,3 +256,14 @@ print(compile("module z let a = b end"))
 print(compile("module let a = b end"))
 
 print(compile("a; b a; c"))
+
+print(compile( "infixl * 6 "
+             + "infixl / 6 "
+             + "infixl + 7 "
+             + "infixl - 7 "
+             + "a + b * c"))
+print(compile( "infixl * 7 "
+             + "infixl / 7 "
+             + "infixl + 6 "
+             + "infixl - 6 "
+             + "a + b * c"))
