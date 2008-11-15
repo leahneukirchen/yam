@@ -193,6 +193,13 @@ function compile_expr(e) {
         emit("}")
     }
     break
+  case "seq":
+    for (var i = 0; i < e.exprs.length; i++) {
+      compile_expr(e.exprs[i])
+      if (i != e.exprs.length - 1)
+        emit(", ")
+    }
+    break
   case "tuple":
     emit("[")
     for (var i = 0; i < e.elts.length; i++) {
@@ -245,3 +252,5 @@ print(compile("fn | x y if x == y -> 1 | _ _ -> 0"))
 print(compile("module z let a = b end"))
 
 print(compile("module let a = b end"))
+
+print(compile("a; b a; c"))

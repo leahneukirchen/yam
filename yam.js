@@ -26,6 +26,10 @@ function lossyList(p, s) {
   return action(optional(sequence(wlist(p, s), optional(s))),
     function(ast) { return ast[0] ? ast[0] : [] })
 }
+function lossyList2(p, s) {
+  return action(sequence(p, s, wlist(p, s), optional(s)),
+    function(ast) { return [ast[0]].concat(ast[2]) })
+}
 
 /* forward declarations.  */
 var Expr = function(state) { return Expr(state); }
@@ -220,7 +224,12 @@ var Infix0 = chainl(whitespace(Infix3), choice(infixr_op('$')))
 // TODO: build list of infix levels from table.
 //       avoid + trying to match ++
 
-var Infix = Infix0
+var Infix = chainl(whitespace(Infix0), action(whitespace(';'),
+  function(ast) { return function(lhs, rhs) {
+                    if (lhs.type == "seq")
+                      return { type: "seq", exprs: lhs.exprs.concat(rhs) }
+                    else
+                      return { type: "seq", exprs: [lhs, rhs] }}}))
 
 var Module = action(wsequence("module", repeat0(TopLevelExpr), "end"),
   function(ast) { return { type: "module", exprs: ast[1] } })
@@ -317,4 +326,6 @@ print(Expr(ps("(fn x y -> y) 6 7")).toSource())
 print(CompilationUnit(ps("let a = b let c = d")).toSource())
 
 print(CompilationUnit(ps("module z let a = b end")).toSource())
+
+print(CompilationUnit(ps("a; b a; c")).toSource())
 
