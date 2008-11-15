@@ -25,8 +25,14 @@ function global_eval(code) {
 }
 
 require = function(file) {
-  var f = new File(file)
-  f.open("read")
+  var f
+  try {
+    f = new File(file)
+    f.open("read")
+  } catch(e) {
+    f = new File(file + ".ym")
+    f.open("read")
+  }
   global_eval (code = compile (f.readAll().join("\n")))
   if (!$silent)
     print(code)
@@ -55,7 +61,8 @@ function repl() {
       if (!$silent) {
         print(";; result:")
       }
-      print(result)
+      if (!$silent || result != undefined)
+        print(result)
     } catch(e) {
       print(e)
       print(e.stack)
