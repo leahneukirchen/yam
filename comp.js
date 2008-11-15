@@ -1,11 +1,13 @@
 load('yam.js')
-print("\n")
 
 var $code = []
 
 function Cons(name, value) {
   this.name = name
   this.value = value
+  this.toString = function() {
+    return name + "(" + value.toString() + ")"
+  }
 }
 
 function serialize(o) {
@@ -27,13 +29,12 @@ function assert(t, str) {
 function compile(str) {
   var cu = CompilationUnit(ps(str))
   var expr = cu.ast
-  print(expr.toSource())
   
   if (!cu)
     throw("syntax error, can't parse")
 
   if (cu.remaining.length > 0) {
-    print(cu.remaining.toSource())
+    print(cu.toSource())
     throw("syntax error: " +
           cu.remaining.input.substr(0, cu.remaining.index) + " **> " +
           cu.remaining.input.substr(cu.remaining.index, cu.remaining.length) +
@@ -83,7 +84,6 @@ function emit_matchers(expr, prefix) {
 }
 
 function emit_assigners(expr, prefix) {
-  print(prefix)
   switch (expr.type) {
   case "lit":
     break                       // do nothing
@@ -125,7 +125,7 @@ function compile_expr(e) {
     break
   case "let":
     emit("(function(")
-    emit(e.bindings.map(function(v){return v[0]}).join(","))
+    emit(e.bindings.map(function(v){return mangle(v[0])}).join(","))
     emit("){return ")
     compile_expr(e.expr)
     emit("})(")
@@ -138,7 +138,7 @@ function compile_expr(e) {
     break
   case "def":
     for (var i = 0; i < e.bindings.length; i++) {
-      emit("var " + mangle(e.bindings[i][0]) + " = ")
+      emit("; var " + mangle(e.bindings[i][0]) + " = ")
       compile_expr(e.bindings[i][1])
       emit("; ")
     }
@@ -172,7 +172,6 @@ function compile_expr(e) {
       for (var i = 0; i < fn.args.length; i++)
         emit("}")
     } else {
-      print(e.fns[0].toSource())
       var a = e.fns[0]
       var n_arg = a.args.length // assume they all have same
                                 // number of arguments

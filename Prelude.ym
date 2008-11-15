@@ -40,6 +40,4 @@ infixr $ 0
 
 let ($) a b = {% a(b) %}
 
-
-
-let print = {% print %}
+let bool n = {% !!n ? new Cons('True', []) : new Cons('False', []) %}

@@ -1,5 +1,5 @@
 load("jsparse/jsparse.js")
-memoize = false                 // for debugging, less cluttered output
+//memoize = false                 // for debugging, less cluttered output
 
 function joined(p) { return join_action(p, "") }
 
@@ -19,8 +19,8 @@ var ExprNoOp = function(state) { return ExprNoOp(state); }
 var MatchTerm = function(state) { return MatchTerm(state); }
 var TopLevelExpr = function(state) { return TopLevelExpr(state); }
 
-var ReservedWord = choice("end", "fn", "if", "in",
-                          "infix", "infixl", "infixr",
+var ReservedWord = choice("end", "fn", "if",
+                          "infixl", "infixr", "infix", "in",
                           "let", "module")
 var ReservedOperator = choice("|", "@", "->", "=")
 
@@ -48,7 +48,7 @@ var Constructor = action(sequence(ConstructorName, Expr),
   function(ast) { return { type: "cons", name: ast[0], expr: ast[1] } })
 
 var Operator = butnot(join_action(repeat1(
-  choice("#", "$", "%", "&", "*", "+", "-", ".", "/", ":",
+  choice("!", "#", "$", "%", "&", "*", "+", "-", ".", "/", ":",
          "<", "=", ">", "?", "@", "\\", "^", "|", "~")),
   ""), ReservedOperator)
 var OperatorName = action(sequence(expect("("), Operator, expect(")")),
@@ -152,7 +152,7 @@ var FunDef = choice(repeat1(action(wsequence("|", MatchTerms, token("->"), Expr)
 var Fn = action(wsequence(token("fn"), FunDef),
   function(ast) { return { type: "fn", fns: ast[1] } })
 
-var Let = action(wsequence(token("let"), choice(single_bind, multi_bind), token("in"), Expr),
+var Let = action(wsequence(token("let"), choice(single_bind, multi_bind), butnot(token("in"), "infix"), Expr),
   function(ast) { return { type: "let", bindings: ast[1], expr: ast[3] } })
 
 var DefLet = action(wsequence(token("let"), choice(single_bind, multi_bind)),

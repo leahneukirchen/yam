@@ -1,2 +1,2 @@
 #!/bin/sh
-rlwrap -r -C yam cat Prelude.ym - | js repl.js
+rlwrap -r -C yam js repl.js
