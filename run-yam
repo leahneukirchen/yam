@@ -1,2 +1,8 @@
 #!/bin/sh
-rlwrap -r -C yam js repl.js
+if [ -z "$1" ]; then
+    rlwrap -r -C yam js -e '$silent = true; load("repl.js"); repl()'
+elif [ "$1" == "-v" ]; then
+    rlwrap -r -C yam js -e '$silent = false; load("repl.js"); repl()'
+else
+    js -e '$silent = true; load("repl.js"); require("'$1'")'
+fi

@@ -1,5 +1,7 @@
 load('comp.js')
 
+$silent = typeof($silent) == "undefined" ? false : $silent
+
 if (typeof(File)) {
   function prompt(p) {
     File.output.write(p)
@@ -26,31 +28,37 @@ require = function(file) {
   var f = new File(file)
   f.open("read")
   global_eval (code = compile (f.readAll().join("\n")))
-  print(code)
+  if (!$silent)
+    print(code)
 }
 
 require("Prelude.ym")
-print("")
 
-while(true) {
-  prompt("; ")
-  var line = gets()
-
-  if (line == null)
-    break
-
-  if (line.match(/^[ \n]*$/))
-    continue
-
-  try {
-    var code = compile(line)
-    print(";; code:")
-    print(code)
-    var result = eval(code)
-    print(";; result:")
-    print(result)
-  } catch(e) {
-    print(e)
-    print(e.stack)
+function repl() {
+  while(true) {
+    prompt("; ")
+    var line = gets()
+    
+    if (line == null)
+      break
+    
+    if (line.match(/^[ \n]*$/))
+      continue
+    
+    try {
+      var code = compile(line)
+      if (!$silent) {
+        print(";; code:")
+        print(code)
+      }
+      var result = eval(code)
+      if (!$silent) {
+        print(";; result:")
+      }
+      print(result)
+    } catch(e) {
+      print(e)
+      print(e.stack)
+    }
   }
 }
