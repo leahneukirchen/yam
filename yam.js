@@ -1,24 +1,6 @@
 load("jsparse/jsparse.js")
 memoize = false                 // for debugging, less cluttered output
 
-/*
-function foldr(f, initial, seq) {
-  for (var i=seq.length-1; i >= 0; i--) {
-    initial = f(initial, seq[i])
-  }
-  return initial
-}
-
-function chainr(p, s) {
-  return action(sequence(p, repeat0(sequence(s, p))),
-                function(ast) {
-                  return foldr(function(v, action) {
-                    return action[0](v, action[1]) },
-                               ast[0], ast[1]);
-                });
-}
-*/
-
 function joined(p) { return join_action(p, "") }
 
 /* Allow optional seperator at the end.  */
@@ -37,7 +19,9 @@ var ExprNoOp = function(state) { return ExprNoOp(state); }
 var MatchTerm = function(state) { return MatchTerm(state); }
 var TopLevelExpr = function(state) { return TopLevelExpr(state); }
 
-var ReservedWord = choice("end", "fn", "if", "in", "infix", "infixl", "infixr", "let", "module")
+var ReservedWord = choice("end", "fn", "if", "in",
+                          "infix", "infixl", "infixr",
+                          "let", "module")
 var ReservedOperator = choice("|", "@", "->")
 
 var IdentifierBeginning = choice(range("a", "z"), "_", "$")
@@ -218,7 +202,6 @@ function nonfix(p, s) {
 
 var ops = []
 
-
 function defineOp(op, assoc, precedence) {
   for (var i = 0; i < ops.length; i++)
     if (ops[i].name == op)
@@ -295,8 +278,6 @@ defineOp('&&', 'right', 3)
 defineOp('$', 'right', 0)
 
 updateOpParser()
-
-// TODO: avoid + trying to match ++
 
 /* dynamic hook to allow updating the table.  */
 var Infix0 = function(state) { return opParser(state) }
@@ -453,3 +434,6 @@ print(Expr(ps("a.0.1")).toSource())
 print(Expr(ps("a.1.A")).toSource())
 
 print(Expr(ps("{a: b, A: b, 0: b}")).toSource())
+
+print(CompilationUnit(ps(    "infixl ++ 3 "
+                           + "c ++ d + e")).toSource())
