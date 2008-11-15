@@ -76,11 +76,19 @@ ok(identifier("iDeNtIfIeR"))
 ok(identifier("a"))
 
 ok(!identifier("let"))
+ok(!identifier("infixr"))
+ok(!identifier("infixl"))
+ok(!identifier("infix"))
+ok(!identifier("in"))
 ok(!identifier("0identifier"))
 ok(!identifier("Identifier"))
+diag("- at the end")
+ok(!identifier("foo-"))
 
 ok(identifier("(+)", "+"))
 ok(identifier("(==)", "=="))
+ok(identifier("(!=)", "!="))
+
 ok(identifier("(+~|<)", "+~|<"))
 ok(!identifier("(->)", "->"))
 ok(!identifier("(=)", "="))
@@ -93,8 +101,8 @@ ok(literal("0.2", 0.2))
 diag("sci notation")
 ok(literal("0.2E3", 0.2E3))
 
-diag("octal")
 ok(literal("0xff", 0xff))
+diag("octal")
 ok(literal("077", 077))
 
 ok(literal('"foo"', "foo"))
@@ -104,4 +112,55 @@ ok(literal('"fo\\no"', "fo\no"))
 ok(!literal(".2", .2))
 ok(!literal("'foo'", "foo"))
 
-p_ast("fn (x,y) -> x")
+/* XXX To be extended.  */
+ok(parses("fn x -> y"))
+ok(parses("fn -> y"))
+ok(parses("fn (A b x) (B c d) -> y"))
+ok(parses("fn 0 1 -> y"))
+ok(parses("fn Foo (1 , 2) b -> z"))
+ok(parses("fn z@(Foo a b) b -> z"))
+ok(parses("fn a if b -> z"))
+ok(parses("{a: b}"))
+ok(parses("{}"))
+ok(parses("{a: b, c: d,}"))
+ok(parses("fn | 0 -> 1 | 2 -> 3"))
+ok(parses("let a = b in c"))
+ok(parses("let a x = b"))
+ok(parses("(fn x y -> y) 6 7"))
+
+
+ok(parses("let a = b let c = d"))
+
+ok(parses("module z let a = b end"))
+
+ok(parses("a; b a; c"))
+
+ok(parses("a.b"))
+
+ok(parses("a.b.c"))
+
+ok(parses("(a + b).c"))
+
+ok(parses("a.0.1"))
+
+ok(parses("a.1.A"))
+
+ok(parses("{a: b, A: b, 0: b}"))
+
+ok(parses("{% foo %}"))
+
+ok(parses("{% foo % bar %}"))
+
+same_ast("infixl * 6 infixl / 6 infixl + 7 + infixl - 7 a + b * c",
+         "infixl * 7 infixl / 7 infixl + 6 + infixl - 6 (a + b) * c")
+
+same_ast("infixr <=> 7 a <=> b <=> c", "infixr <=> 7 a <=> (b <=> c)")
+same_ast("infixl <=> 7 a <=> b <=> c", "infixl <=> 7 (a <=> b) <=> c")
+ok(!parses("infix <=> 9 a <=> b <=> c"))
+
+ok(parses("infixl ++ 3 c ++ d + e"))
+
+
+p_ast("infix == 4\n\
+foo\n\
+infix < 4")
