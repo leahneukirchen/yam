@@ -217,6 +217,13 @@ function compile_expr(e) {
     compile_expr(e.expr)
     emit("))")
     break
+  case "sel":
+    emit("(")
+    compile_expr(e.expr)
+    emit(")[")
+    emit(serialize(e.field))
+    emit("]")
+    break
   default:
     throw "undefined type in compile_expr: " + e.toSource()
   }
@@ -267,3 +274,4 @@ print(compile( "infixl * 7 "
              + "infixl + 6 "
              + "infixl - 6 "
              + "a + b * c"))
+print(compile("a.1.A"))

@@ -149,7 +149,8 @@ var Tuple = action(wsequence("(", lossyList(Expr, ","), ")"),
                   else
                     return { type: "tuple", elts: ast[1] } })
 
-var RecordKey = choice(Identifier, Constructor, Literal)
+var RecordKey = choice(Identifier, ConstructorName,
+                       DecimalIntegerLiteral)
 
 var RecordElt = action(wsequence(RecordKey, ":", Expr),
   function(ast) { return [ast[0], ast[2]] })
@@ -180,7 +181,12 @@ var ExprNoApp = choice(Literal, Constructor, Tuple, Record, Fn, Let, Var, Paren)
 var App = action(wsequence(ExprNoApp, ExprNoOp),
   function(ast) { return { type: "app", expr: ast[0], arg: ast[1] } })
 
-var ExprNoOp = choice(App, ExprNoApp)
+var Sel = action(wsequence(ExprNoApp, repeat1(wsequence(".", RecordKey))),
+  function(ast) { return foldl(function(lhs, rhs) {
+    return { type: "sel", expr: lhs, field: rhs[1] }
+  }, ast[0], ast[1]) })
+
+var ExprNoOp = choice(Sel, App, ExprNoApp)
 
 function infixl_op(name) {
   return action(whitespace(name),
@@ -211,6 +217,7 @@ function nonfix(p, s) {
 }
 
 var ops = []
+
 
 function defineOp(op, assoc, precedence) {
   for (var i = 0; i < ops.length; i++)
@@ -289,20 +296,9 @@ defineOp('$', 'right', 0)
 
 updateOpParser()
 
-// strongest
-// left-associative
-var Infix7 = chainl(whitespace(ExprNoOp), choice(infixl_op('*'), infixl_op('/')))
-var Infix6 = chainl(whitespace(Infix7), choice(infixl_op('+'), infixl_op('-')))
-// non-associative
-var Infix4 = nonfix(whitespace(Infix6), choice(infix_op('==')))
-// right-associative
-var Infix3 = chainl(whitespace(Infix4), choice(infixr_op('||'), infixr_op('&&')))
-//var Infix0 = chainl(whitespace(Infix3), choice(infixr_op('$')))
-// weakest
+// TODO: avoid + trying to match ++
 
-// TODO: build list of infix levels from table.
-//       avoid + trying to match ++
-
+/* dynamic hook to allow updating the table.  */
 var Infix0 = function(state) { return opParser(state) }
 
 var Infix = chainl(whitespace(Infix0), action(whitespace(';'),
@@ -445,3 +441,15 @@ print(sexpr(CompilationUnit(ps(  "infixl <=> 7 "
                                + "a <=> b <=> c")).ast[1]))
 print(sexpr(CompilationUnit(ps(  "infix <=> 9 "
                                + "a <=> b <=> c")).ast[1]))
+
+print(Expr(ps("a.b")).toSource())
+
+print(Expr(ps("a.b.c")).toSource())
+
+print(Expr(ps("(a + b).c")).toSource())
+
+print(Expr(ps("a.0.1")).toSource())
+
+print(Expr(ps("a.1.A")).toSource())
+
+print(Expr(ps("{a: b, A: b, 0: b}")).toSource())
