@@ -3,6 +3,11 @@ load("jsparse/jsparse.js")
 
 function joined(p) { return join_action(p, "") }
 
+function optOr(p, def) {
+  return action(optional(p),
+    function(ast) { return ast || def })
+}
+
 /* Allow optional seperator at the end.  */
 function lossyList(p, s) {
   return action(optional(sequence(wlist(p, s), optional(s))),
@@ -78,23 +83,26 @@ var DecimalDigit = range("0", "9")
 var DecimalIntegerLiteral = choice("0",
                               joined(sequence(range("1", "9"),
                                               joined(repeat0(DecimalDigit)))))
-var SignedInteger = sequence(choice("+", "-", ""), DecimalIntegerLiteral)
+var SignedInteger = joined(sequence(optOr(choice("+", "-"), ""), DecimalIntegerLiteral))
 var ExponentIndicator = choice("e", "E")
-var ExponentPart = sequence(ExponentIndicator, SignedInteger)
-var DecimalLiteral = choice(action(joined(sequence(DecimalIntegerLiteral, ".",
+var ExponentPart = joined(sequence(ExponentIndicator, SignedInteger))
+var DecimalLiteral = choice(action(joined(sequence(SignedInteger, ".",
                                                    repeat0(DecimalDigit),
-                                                   action(optional(ExponentPart),
-                                                     function(ast) { return ast || "" }))),
+                                                   optOr(ExponentPart, ""))),
                                    function(ast) { return parseFloat(ast) }),
-                            action(joined(sequence(DecimalIntegerLiteral,
-                                                   action(optional(ExponentPart),
-                                                     function(ast) { return ast || ""}))),
-                                   function(ast) { return parseInt(ast) }))
+                            action(joined(sequence(SignedInteger,
+                                                   optOr(ExponentPart, ""))),
+                                   function(ast) { return parseFloat(ast) }))
 
 var HexDigit = choice(range("0", "9"), range("a", "f"), range("A", "F"))
 var HexIntegerLiteral = action(joined(sequence(choice("0x", "0X"), joined(repeat1(HexDigit)))),
   function(ast) { return parseInt(ast) })
-var NumericLiteral = choice(HexIntegerLiteral, DecimalLiteral)
+
+var OctalDigit = choice(range("0", "7"))
+var OctalIntegerLiteral = action(joined(sequence("0", joined(repeat1(OctalDigit)))),
+  function(ast) { return parseInt(ast) })
+
+var NumericLiteral = choice(HexIntegerLiteral, OctalIntegerLiteral, DecimalLiteral)
 
 var SingleEscapeCharacter = choice("'", "\"", "\\", "b", "f", "n", "r", "t", "v"
 )

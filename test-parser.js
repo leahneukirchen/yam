@@ -97,15 +97,19 @@ ok(!identifier("(->)", "->"))
 ok(!identifier("(=)", "="))
 
 ok(literal("1", 1))
-diag("signed ints")
+ok(literal("91", 91))
 ok(literal("-1", -1))
+ok(literal("-1.2", -1.2))
 ok(literal("1.2", 1.2))
 ok(literal("0.2", 0.2))
-diag("sci notation")
+
 ok(literal("0.2E3", 0.2E3))
+ok(literal("0.2e3", 0.2E3))
+ok(literal("0.2e-10", 2e-11))
+ok(literal("2e-11", 2e-11))
+ok(literal("2e3", 2e3))
 
 ok(literal("0xff", 0xff))
-diag("octal")
 ok(literal("077", 077))
 
 ok(literal('"foo"', "foo"))
