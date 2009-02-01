@@ -26,7 +26,7 @@ var Identifier = function(state) { return Identifier(state); }
 
 var ReservedWord = choice("end", "fn", "if",
                           "infixl", "infixr", "infix", "in",
-                          "let", "module")
+                          "let", "module", "do")
 var ReservedOperator = choice("|", "@", "->", "=")
 
 var IdentifierBeginning = choice(range("a", "z"), "_")
@@ -333,15 +333,21 @@ updateOpParser()
 /* dynamic hook to allow updating the table.  */
 var Infix0 = function(state) { return opParser(state) }
 
-var Infix = chainl(whitespace(Infix0), action(whitespace(';'),
-  function(ast) { return function(lhs, rhs) {
-                    if (lhs.type == "seq")
-                      return { type: "seq", exprs: lhs.exprs.concat(rhs) }
-                    else
-                      return { type: "seq", exprs: [lhs, rhs] }}}))
+var Infix = action(sequence(
+  chainl(whitespace(Infix0), action(whitespace(';'),
+    function(ast) { return function(lhs, rhs) {
+                      if (lhs.type == "seq")
+                        return { type: "seq", exprs: lhs.exprs.concat(rhs) }
+                      else
+                        return { type: "seq", exprs: [lhs, rhs] }}})),
+  optional(whitespace(";"))),
+    function(ast) { return ast[0] })
 
 var Module = action(wsequence("module", repeat0(TopLevelExpr), "end"),
   function(ast) { return { type: "module", exprs: ast[1] } })
+
+var Block = action(wsequence("do", repeat0(Expr), "end"),
+  function(ast) { return { type: "seq", exprs: ast[1] } })
 
 var NamedModule = action(wsequence("module", Identifier,
                                    repeat0(TopLevelExpr), "end"),
@@ -349,7 +355,7 @@ var NamedModule = action(wsequence("module", Identifier,
                            [[ast[1], { type: "module", exprs: ast[2] }]]
                          }})
 
-var Expr = choice(App, Infix, ExprNoOp, Module)
+var Expr = choice(App, Infix, ExprNoOp, Module, Block)
 
 var OpDecl = action(choice(action(wsequence("infixl", Operator, DecimalLiteral),
                                   function(ast) {
