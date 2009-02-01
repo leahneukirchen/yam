@@ -27,8 +27,12 @@ var ReservedOperator = choice("|", "@", "->", "=")
 
 var IdentifierBeginning = choice(range("a", "z"), "_")
 var IdentifierPart = choice(range("a", "z"), range("A", "Z"),
-                            range("0", "9"), "_", "-", "'")
-var IdentifierEnd = choice(IdentifierPart, "!", "?")
+                            range("0", "9"), "_",
+                            sequence("-", and(range("a", "z"), range("A", "Z"),
+                                              range("0", "9"))),
+                            "'")
+var IdentifierEnd = choice(range("a", "z"), range("A", "Z"),
+                            range("0", "9"), "_", "'", "!", "?")
 
 var IdentifierName = joined(
   sequence(IdentifierBeginning,
