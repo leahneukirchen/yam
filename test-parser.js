@@ -48,7 +48,8 @@ ok(parses("a + b bb + c"))
 
 ok(parses("a || b || c || d"))
 
-same_ast("a b c", "a (b c)")
+same_ast("a b c", "(a b) c")
+same_ast("a b c d", "((a b) c) d")
 same_ast("a + b + c", "(a + b) + c")
 same_ast("a + b + c + d", "((a + b) + c) + d")
 same_ast("a || b || c", "a || (b || c)")

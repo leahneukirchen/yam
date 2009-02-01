@@ -20,7 +20,6 @@ function lossyList2(p, s) {
 
 /* forward declarations.  */
 var Expr = function(state) { return Expr(state); }
-var ExprNoOp = function(state) { return ExprNoOp(state); }
 var MatchTerm = function(state) { return MatchTerm(state); }
 var TopLevelExpr = function(state) { return TopLevelExpr(state); }
 var Identifier = function(state) { return Identifier(state); }
@@ -190,8 +189,10 @@ var Raw = action(sequence("{%",
 
 var ExprNoApp = choice(Literal, Constructor, Tuple, Record, Fn, Let, Var, Paren, Raw)
 
-var App = action(wsequence(ExprNoApp, ExprNoOp),
-  function(ast) { return { type: "app", expr: ast[0], arg: ast[1] } })
+var App = action(wsequence(ExprNoApp, repeat1(whitespace(ExprNoApp))),
+  function(ast) { return foldl(function(lhs, rhs) {
+    return { type: "app", expr: lhs, arg: rhs }
+  }, ast[0], ast[1]) })
 
 var Sel = action(wsequence(ExprNoApp, repeat1(wsequence(".", RecordKey))),
   function(ast) { return foldl(function(lhs, rhs) {
