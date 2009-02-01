@@ -41,3 +41,6 @@ infixr $ 0
 let ($) a b = {% a(b) %}
 
 let bool n = {% !!n ? new Cons('True', []) : new Cons('False', []) %}
+
+let fst (x, y) = x
+let snd (x, y) = y
