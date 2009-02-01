@@ -138,9 +138,9 @@ function compile_expr(e) {
     break
   case "def":
     for (var i = 0; i < e.bindings.length; i++) {
-      emit("; var " + mangle(e.bindings[i][0]) + " = ")
+      emit("; var " + mangle(e.bindings[i][0]) + " = (")
       compile_expr(e.bindings[i][1])
-      emit("; ")
+      emit("); ")
     }
     break
   case "module":
