@@ -18,15 +18,16 @@ var Expr = function(state) { return Expr(state); }
 var ExprNoOp = function(state) { return ExprNoOp(state); }
 var MatchTerm = function(state) { return MatchTerm(state); }
 var TopLevelExpr = function(state) { return TopLevelExpr(state); }
+var Identifier = function(state) { return Identifier(state); }
 
 var ReservedWord = choice("end", "fn", "if",
                           "infixl", "infixr", "infix", "in",
                           "let", "module")
 var ReservedOperator = choice("|", "@", "->", "=")
 
-var IdentifierBeginning = choice(range("a", "z"), "_", "$")
+var IdentifierBeginning = choice(range("a", "z"), "_")
 var IdentifierPart = choice(range("a", "z"), range("A", "Z"),
-                            range("0", "9"), "_", "-", "$", "'")
+                            range("0", "9"), "_", "-", "'")
 var IdentifierEnd = choice(IdentifierPart, "!", "?")
 
 var IdentifierName = joined(
