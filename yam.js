@@ -47,7 +47,7 @@ var IdentifierName = joined(
 var ConstructorBeginning = choice(range("A", "Z"))
 var ConstructorPart = choice(range("a", "z"), range("A", "Z"),
                              range("0", "9"))
-var ConstructorEnd = choice(ConstructorPart)
+var ConstructorEnd = ConstructorPart
 
 var ConstructorName = joined(
   sequence(ConstructorBeginning,
@@ -57,10 +57,12 @@ var ConstructorName = joined(
 var Constructor = action(sequence(ConstructorName, Expr),
   function(ast) { return { type: "cons", name: ast[0], expr: ast[1] } })
 
-var Operator = butnot(join_action(repeat1(
+var Operator = choice(butnot(joined(repeat1(
   choice("!", "#", "$", "%", "&", "*", "+", "-", ".", "/", ":",
-         "<", "=", ">", "?", "@", "\\", "^", "|", "~")),
-  ""), ReservedOperator)
+         "<", "=", ">", "?", "@", "\\", "^", "|", "~"))), ReservedOperator),
+  action(sequence("`", Identifier, "`"),
+    function(ast) { return ast[1] }))
+
 var OperatorName = action(sequence(expect("("), Operator, expect(")")),
   function(ast) {
     if (!opDefined(ast[0])) {
@@ -236,6 +238,13 @@ function nonfix(p, s) {
 
 var ops = []
 
+var Infix10 = chainl(whitespace(ExprNoOp),
+                     action(whitespace(sequence("`", Identifier, "`")),
+  function(ast) { return function(lhs, rhs) {
+    return { type: "app",
+             expr: { type: "app", expr: {type:"var", name: ast[1] }, arg: lhs },
+             arg: rhs } }}))
+
 function opDefined(op) {
   for (var i = 0; i < ops.length; i++)
     if (ops[i].name == op)
@@ -297,7 +306,7 @@ function buildOpParser(ops) {
 
   var parsers = []
 
-  parsers[tbl.length] = ExprNoOp
+  parsers[tbl.length] = Infix10
   for (var i = tbl.length - 1; i >= 0; i--) {
     tbl[i] = tbl[i] || []
     parsers[i] = findChain(tbl[i])(whitespace(parsers[i+1]), buildChoice(tbl[i]))

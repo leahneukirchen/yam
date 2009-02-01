@@ -169,5 +169,9 @@ same_ast("infixl * 6 infixl / 6 infixl + 7 + infixl - 7 a + b * c",
 same_ast("infixr <=> 7 a <=> b <=> c", "infixr <=> 7 a <=> (b <=> c)")
 same_ast("infixl <=> 7 a <=> b <=> c", "infixl <=> 7 (a <=> b) <=> c")
 
+same_ast("a `b` c", "(b a) c")
+same_ast("a `b` c `d` e", "(a `b` c) `d` e")
+same_ast("a `b` c `d` e", "(d ((b a) c)) e")
+
 ok(parses("infixl ++ 3 c ++ d + e"))
 ok(raises(function(){parses("infix <=> 9 a <=> b <=> c")}))
