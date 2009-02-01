@@ -33,6 +33,11 @@ function literal(lit, ex) {
   return a && a.type == "lit" && a.expr === ex
 }
 
+function raises(f) {
+  try { f() } catch(e) { return e }
+  return false
+}
+
 ok(parses("let a = b in c"))
 ok(parses("let | a = b | c = d in c"))
 ok(parses("let a = b in let c = d in c"))
@@ -163,11 +168,6 @@ same_ast("infixl * 6 infixl / 6 infixl + 7 + infixl - 7 a + b * c",
 
 same_ast("infixr <=> 7 a <=> b <=> c", "infixr <=> 7 a <=> (b <=> c)")
 same_ast("infixl <=> 7 a <=> b <=> c", "infixl <=> 7 (a <=> b) <=> c")
-ok(!parses("infix <=> 9 a <=> b <=> c"))
 
 ok(parses("infixl ++ 3 c ++ d + e"))
-
-
-p_ast("infix == 4\n\
-foo\n\
-infix < 4")
+ok(raises(function(){parses("infix <=> 9 a <=> b <=> c")}))
