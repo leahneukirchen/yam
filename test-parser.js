@@ -158,6 +158,10 @@ ok(parses("a.0.1"))
 
 ok(parses("a.1.A"))
 
+ok(parses("a.b(1)"))
+
+ok(parses("a b.c"))
+
 ok(parses("{a: b, A: b, 0: b}"))
 
 ok(parses("{% foo %}"))

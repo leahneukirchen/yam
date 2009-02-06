@@ -187,19 +187,21 @@ var Raw = action(sequence("{%",
                           "%}"),
   function(ast) { return { type: "raw", code: ast[1] } })
 
-var ExprNoApp = choice(Literal, Constructor, Tuple, Record, Fn, Let, Var, Paren, Raw)
+var ExprNoSel = choice(Literal, Constructor, Tuple, Record, Fn, Let, Var, Paren, Raw)
+
+var Sel = action(wsequence(ExprNoSel, repeat1(wsequence(".", RecordKey))),
+  function(ast) { return foldl(function(lhs, rhs) {
+    return { type: "sel", expr: lhs, field: rhs[1] }
+  }, ast[0], ast[1]) })
+
+var ExprNoApp = choice(Sel, ExprNoSel)
 
 var App = action(wsequence(ExprNoApp, repeat1(whitespace(ExprNoApp))),
   function(ast) { return foldl(function(lhs, rhs) {
     return { type: "app", expr: lhs, arg: rhs }
   }, ast[0], ast[1]) })
 
-var Sel = action(wsequence(ExprNoApp, repeat1(wsequence(".", RecordKey))),
-  function(ast) { return foldl(function(lhs, rhs) {
-    return { type: "sel", expr: lhs, field: rhs[1] }
-  }, ast[0], ast[1]) })
-
-var ExprNoOp = choice(Sel, App, ExprNoApp)
+var ExprNoOp = choice(App, ExprNoApp)
 
 function infixl_op(name) {
   return action(whitespace(name),
